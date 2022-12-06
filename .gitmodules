@@ -4,3 +4,9 @@
 [submodule "blasfeo"]
 	path = blasfeo
 	url = https://github.com/giaf/blasfeo.git
+[submodule "MPCC_Solver/hpipm"]
+	path = MPCC_Solver/hpipm
+	url = https://github.com/giaf/hpipm.git
+[submodule "MPCC_Solver/blasfeo"]
+	path = MPCC_Solver/blasfeo
+	url = https://github.com/giaf/blasfeo.git
