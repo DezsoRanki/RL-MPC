@@ -1,0 +1,6 @@
+[submodule "hpipm"]
+	path = hpipm
+	url = https://github.com/giaf/hpipm.git
+[submodule "blasfeo"]
+	path = blasfeo
+	url = https://github.com/giaf/blasfeo.git
