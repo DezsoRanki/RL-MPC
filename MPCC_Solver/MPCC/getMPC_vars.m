@@ -65,6 +65,7 @@ if CarModel == "ORCA"
     % Cost Parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     MPC_vars.qC = 0.1; % contouring cost
+%     MPC_vars.qC = 100;
     MPC_vars.qCNmult= 10; % increase of terminal contouring cost
     MPC_vars.qL= 1000; % lag cost
     MPC_vars.qVtheta= 0.02; % theta maximization cost
