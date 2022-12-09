@@ -76,17 +76,21 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         % Change class name and constructor name accordingly
         function this = MPCC_Env()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([5 1]);
+%             ObservationInfo = rlNumericSpec([5 1]);
+            ObservationInfo = rlNumericSpec([3 1]);
             ObservationInfo.Name = 'Vehicle States';
 %             ObservationInfo.Description = 'x_phy, y_phy, x_virt, y_virt, eC, eL';
-            ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
+%             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
+            ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length';
             
             % Initialize Action settings   
-            ActionInfo = rlNumericSpec([1 1]);
-            ActionInfo.Name = 'Cost Weights';
-            ActionInfo.Description = 'qC';
-            ActionInfo.LowerLimit = 0.001;
-            ActionInfo.UpperLimit = 100;
+%             ActionInfo = rlNumericSpec([1 1]);
+            ActionInfo = rlNumericSpec([6 1]);
+%             ActionInfo.Name = 'Cost Weights';
+            ActionInfo.Name = 'qC, qL, qomega, rD, rDelta rVtheta';
+%             ActionInfo.Description = 'qC';
+            ActionInfo.LowerLimit = 1e-5;
+            ActionInfo.UpperLimit = 1e4;
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
@@ -138,8 +142,13 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         % Apply system dynamics and simulates the environment with the 
         % given action for one step.
         function [Observation,Reward,IsDone,LoggedSignals] = step(this,Action)
-            qC = Action;
-            this.MPC_vars.qC = qC;
+%             [qC; qL; qOmega; rD; rDelta; rVtheta] = Action;
+            this.MPC_vars.qC = Action(1);
+            this.MPC_vars.qL = Action(2);
+            this.MPC_vars.qOmega = Action(3);
+            this.MPC_vars.rD = Action(4);
+            this.MPC_vars.rDelta = Action(5);
+            this.MPC_vars.rVtheta = Action(6);
 
             % Simulation
             for i = 1: this.simN
@@ -234,7 +243,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             end
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            Observation = [mean(this.obs_log); max(this.obs_log); driving_length; curvature_x; curvature_y];
+%             Observation = [mean(this.obs_log); max(this.obs_log); driving_length; curvature_x; curvature_y];
+            Observation = [mean(this.obs_log); max(this.obs_log); driving_length];
             this.State = this.x;
 
             LoggedSignals = [];
@@ -342,7 +352,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             InitialObservation = [x_phys;y_phys;x_virt;y_virt;eC;eL];
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            InitialObservation = [eC; eC; 0; curvature_x; curvature_y];
+%             InitialObservation = [eC; eC; 0; curvature_x; curvature_y];
+            InitialObservation = [eC; eC; 0];
             this.State = this.x;
             
             % (optional) use notifyEnvUpdated to signal that the 

@@ -29,7 +29,7 @@ ModelParams=getModelParams(MPC_vars.ModelNo);
 % choose optimization interface options: 'Yalmip','CVX','hpipm','quadprog'
 MPC_vars.interface = 'hpipm';
 
-MPC_vars.qC = 100;
+MPC_vars.qC = 0.1;
 
 nx = ModelParams.nx;
 nu = ModelParams.nu;
