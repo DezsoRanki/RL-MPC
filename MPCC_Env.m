@@ -90,7 +90,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             ActionInfo.Name = 'qC, qL, qomega, rD, rDelta rVtheta';
 %             ActionInfo.Description = 'qC';
             ActionInfo.LowerLimit = 1e-5;
-            ActionInfo.UpperLimit = 1e4;
+            ActionInfo.UpperLimit = 100;
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
