@@ -14,7 +14,7 @@ function [  ] = PlotAction( Action, MPC_vars, simN )
     xlabel('time [s]')
     ylabel('qL [-]')
     subplot(n,1,3)
-    plot([0:simN]*Ts,Action_remap(2,:))
+    plot([0:simN]*Ts,Action_remap(3,:))
     xlabel('time [s]')
     ylabel('qOmega [-]')
 
