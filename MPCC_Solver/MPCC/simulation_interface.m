@@ -30,6 +30,7 @@ ModelParams=getModelParams(MPC_vars.ModelNo);
 MPC_vars.interface = 'hpipm';
 
 MPC_vars.qC = 0.1;
+MPC_vars.qL = 10;
 
 nx = ModelParams.nx;
 nu = ModelParams.nu;

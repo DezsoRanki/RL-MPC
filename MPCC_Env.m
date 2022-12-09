@@ -90,8 +90,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             ActionInfo.Name = 'qC, qL, qomega, rD, rDelta rVtheta';
             ActionInfo.Name = 'qC, qL';
 %             ActionInfo.Description = 'qC';
-            ActionInfo.LowerLimit = 1e-5;
-            ActionInfo.UpperLimit = 100;
+            ActionInfo.LowerLimit = [1e-5; 100];
+            ActionInfo.UpperLimit = [100; 10000];
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
@@ -150,7 +150,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             this.MPC_vars.rD = Action(4);
 %             this.MPC_vars.rDelta = Action(5);
 %             this.MPC_vars.rVtheta = Action(6);
-
+            PlotAction(Action, this.MPC_vars, this.simN)
             % Simulation
             for i = 1: this.simN
                 
