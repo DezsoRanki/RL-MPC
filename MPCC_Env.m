@@ -85,13 +85,13 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
-            ActionInfo = rlNumericSpec([2 1]);
+            ActionInfo = rlNumericSpec([3 1]);
 %             ActionInfo.Name = 'Cost Weights';
-            ActionInfo.Name = 'qC, qL, qomega, rD, rDelta rVtheta';
-            ActionInfo.Name = 'qC, qL';
+%             ActionInfo.Name = 'qC, qL, qOmega, rD, rDelta rVtheta';
+            ActionInfo.Name = 'qC, qL, qOmega';
 %             ActionInfo.Description = 'qC';
-            ActionInfo.LowerLimit = [1e-5; 100];
-            ActionInfo.UpperLimit = [100; 10000];
+            ActionInfo.LowerLimit = [1e-5; 100; 1e-4];
+            ActionInfo.UpperLimit = [100; 10000; 1e-6];
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
