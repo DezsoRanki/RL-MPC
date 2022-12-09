@@ -76,12 +76,12 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         % Change class name and constructor name accordingly
         function this = MPCC_Env()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([5 1]);
-%             ObservationInfo = rlNumericSpec([3 1]);
+%             ObservationInfo = rlNumericSpec([5 1]);
+            ObservationInfo = rlNumericSpec([3 1]);
             ObservationInfo.Name = 'Vehicle States';
 %             ObservationInfo.Description = 'x_phy, y_phy, x_virt, y_virt, eC, eL';
-            ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
-%             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length';
+%             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
+            ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length';
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
@@ -146,7 +146,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             [qC; qL; qOmega; rD; rDelta; rVtheta] = Action;
             this.MPC_vars.qC = Action(1);
             this.MPC_vars.qL = Action(2);
-            this.MPC_vars.qOmega = Action(3);
+%             this.MPC_vars.qOmega = Action(3);
 %             this.MPC_vars.rD = Action(4);
 %             this.MPC_vars.rDelta = Action(5);
 %             this.MPC_vars.rVtheta = Action(6);
@@ -353,8 +353,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             InitialObservation = [x_phys;y_phys;x_virt;y_virt;eC;eL];
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            InitialObservation = [eC; eC; 0; curvature_x; curvature_y];
-%             InitialObservation = [eC; eC; 0];
+%             InitialObservation = [eC; eC; 0; curvature_x; curvature_y];
+            InitialObservation = [eC; eC; 0];
             this.State = this.x;
             
             % (optional) use notifyEnvUpdated to signal that the 
