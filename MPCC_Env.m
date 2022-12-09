@@ -85,9 +85,10 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
-            ActionInfo = rlNumericSpec([6 1]);
+            ActionInfo = rlNumericSpec([2 1]);
 %             ActionInfo.Name = 'Cost Weights';
             ActionInfo.Name = 'qC, qL, qomega, rD, rDelta rVtheta';
+            ActionInfo.Name = 'qC, qL';
 %             ActionInfo.Description = 'qC';
             ActionInfo.LowerLimit = 1e-5;
             ActionInfo.UpperLimit = 100;
@@ -145,10 +146,10 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             [qC; qL; qOmega; rD; rDelta; rVtheta] = Action;
             this.MPC_vars.qC = Action(1);
             this.MPC_vars.qL = Action(2);
-            this.MPC_vars.qOmega = Action(3);
-            this.MPC_vars.rD = Action(4);
-            this.MPC_vars.rDelta = Action(5);
-            this.MPC_vars.rVtheta = Action(6);
+%             this.MPC_vars.qOmega = Action(3);
+%             this.MPC_vars.rD = Action(4);
+%             this.MPC_vars.rDelta = Action(5);
+%             this.MPC_vars.rVtheta = Action(6);
 
             % Simulation
             for i = 1: this.simN
