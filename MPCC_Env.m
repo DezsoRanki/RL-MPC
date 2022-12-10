@@ -38,7 +38,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         B_log
         qpTime_log
         % used to further cauculate the mean and max value along one step
-        obs_log = zeros(1, 20)
+        obs_log = zeros(2, 20)
 
         last_closestIdx
         
@@ -76,11 +76,12 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         % Change class name and constructor name accordingly
         function this = MPCC_Env()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([5 1]);
+            ObservationInfo = rlNumericSpec([6 1]);
 %             ObservationInfo = rlNumericSpec([3 1]);
             ObservationInfo.Name = 'Vehicle States';
 %             ObservationInfo.Description = 'x_phy, y_phy, x_virt, y_virt, eC, eL';
-            ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
+%             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
+            ObservationInfo.Description = 'eC_error_mean, eC_error_max, v_mean, v_max, curvature_x, curvature_y';
 %             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length';
             
             % Initialize Action settings   
@@ -221,7 +222,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
                 if i == this.simN
                     last_theta = mod(Xk(end),this.traj.ppx.breaks(end));
                 end
-                this.obs_log(:, i) = eC;
+                this.obs_log(1, i) = eC;
+                this.obs_log(2, i) = Xk(this.ModelParams.stateindex_vy);
 
             end
             
@@ -244,7 +246,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             end
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            Observation = [mean(this.obs_log); max(this.obs_log); driving_length; curvature_x; curvature_y];
+            Observation = [mean(this.obs_log(1,:)); max(this.obs_log(1,:)); mean(this.obs_log(2,:)); max(this.obs_log(2,:)); curvature_x; curvature_y];
 %             Observation = [mean(this.obs_log); max(this.obs_log); driving_length];
             this.State = this.x;
 
@@ -256,7 +258,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             this.IsDone = IsDone;
             
             % Get reward
-            Reward = getReward(this, this.obs_log, driving_length);
+%             Reward = getReward(this, this.obs_log, driving_length);
+            Reward = getReward(this, this.obs_log);
             
             % (optional) use notifyEnvUpdated to signal that the 
             % environment has been updated (e.g. to update visualization)
@@ -353,7 +356,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             InitialObservation = [x_phys;y_phys;x_virt;y_virt;eC;eL];
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            InitialObservation = [eC; eC; 0; curvature_x; curvature_y];
+            InitialObservation = [eC; eC; 0; 0; curvature_x; curvature_y];
 %             InitialObservation = [eC; eC; 0];
             this.State = this.x;
             
@@ -398,7 +401,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         end
         
         % Reward function
-        function Reward = getReward(this, obs_log, driving_length)
+        function Reward = getReward(this, obs_log)
 %             Xk = this.x(:,1); % observation from 1
 %             x_phys = Xk(1);
 %             y_phys = Xk(2);
@@ -408,14 +411,16 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             [eC, eL] = this.getErrors(this.traj, theta_virt,x_phys,y_phys);
 % %             Reward = exp(-((eC * eC) / 0.001 + (eL * eL) / 0.00001));
             
-            Reward = driving_length * 25;
-%             mean_eC = mean(obs_log);
+%             Reward = driving_length * 25;
+            mean_eC = mean(obs_log(1,:));
 %             shifted_length = driving_length * 25 - 1; % [0,1] to [-1, 0]
 %             error_reward = exp(-(mean_eC * mean_eC) / 0.001);
 %             length_reward = exp(shifted_length);
 %             Reward = length_reward;
 %             Reward = 0.5 * error_reward + 0.5 * length_reward;
 %             Reward = 10* Reward;
+            mean_v = mean(obs_log(2,:));
+            Reward = mean_v - mean_eC;
         
         end
         
