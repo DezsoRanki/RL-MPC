@@ -211,16 +211,15 @@ for i = 1: simN
     y_phys = Xk(2);
     theta_virt=mod(Xk(end),traj.ppx.breaks(end));
     [eC, eL] = getErrors(traj, theta_virt,x_phys,y_phys);
-    length = Xk(end);
-    if i > 1 && length < eC_log(1, i-1)
+    length = Xk(end)
+    if Xk(end) < eC_log(1, i-1)
         cycle_flag = 1;
     end
-    if cycle_flag == 1
-        length = length + tl;
-    end
-    eC_log(1, i) = length;
+    if cycle_flag == 1:
+        
+    eC_log(1, i) = Xk(end);
     eC_log(2, i) = eC;
-    v_log(1, i) = length;
+    v_log(1, i) = Xk(end);
     v_log(2, i) = Xk(ModelParams.stateindex_vx);
     
 end

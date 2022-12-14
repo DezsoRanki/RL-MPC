@@ -3,6 +3,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
     
     %% Properties (set properties' attributes accordingly)
     properties
+        isTrain = 1
         % Specify and initialize environment's necessary properties    
         CarModel = 'ORCA'
 
@@ -36,7 +37,13 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         X_log
         U_log
         B_log
+        filename = 'Info_log.mat'
+        m
         qpTime_log
+        length_log = zeros(1, 500);
+        % total simN steps
+        total_count = 0
+        cycle_flag = 0
         % used to further cauculate the mean and max value along one step
         obs_log = zeros(2, 20)
 
@@ -76,13 +83,15 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         % Change class name and constructor name accordingly
         function this = MPCC_Env()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([6 1]);
+            ObservationInfo = rlNumericSpec([10 1]);
 %             ObservationInfo = rlNumericSpec([3 1]);
             ObservationInfo.Name = 'Vehicle States';
 %             ObservationInfo.Description = 'x_phy, y_phy, x_virt, y_virt, eC, eL';
 %             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length, curvature_x, curvature_y';
-            ObservationInfo.Description = 'eC_error_mean, eC_error_max, v_mean, v_max, curvature_x, curvature_y';
+%             ObservationInfo.Description = 'eC_error_mean, eC_error_max, v_mean, v_max, curvature_x, curvature_y';
 %             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length';
+            ObservationInfo.Description = ['eC_error_mean, eC_error_max, v_mean, v_max, pred_eC_mean,' ...
+                'pred_eC_max, pred_v_mean, pred_v_max, curvature_x, curvature_y'];
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
@@ -136,6 +145,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             this.U_log = zeros(3*this.MPC_vars.N,this.simN);
             this.B_log = zeros(4*this.MPC_vars.N,this.simN);
             this.qpTime_log = zeros(1,this.simN);
+
+            this.m = matfile(this.filename, 'Writable', true); %Note: writable is true by default IF the file does not exist
             
             % Initialize property values and pre-compute necessary values
 %             updateActionInfo(this);
@@ -154,6 +165,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             PlotAction(Action, this.MPC_vars, this.simN)
             % Simulation
             for i = 1: this.simN
+                this.total_count = this.total_count + 1;
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%% MPCC-Call %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -223,7 +235,21 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
                     last_theta = mod(Xk(end),this.traj.ppx.breaks(end));
                 end
                 this.obs_log(1, i) = eC;
-                this.obs_log(2, i) = Xk(this.ModelParams.stateindex_vy);
+                this.obs_log(2, i) = Xk(this.ModelParams.stateindex_vx);
+                if this.isTrain == 0
+                    length = Xk(end);
+                    if this.total_count > 1 && length < this.length_log(1, this.total_count-1)
+                        this.cycle_flag = 1;
+                    end
+                    if this.cycle_flag == 1
+                        length = length + this.tl;
+                    end
+                    this.length_log(1, this.total_count) = length;
+                    this.m.out(1, this.total_count) = length;
+                    this.m.out(2, this.total_count) = eC;
+                    this.m.out(3, this.total_count) = length;
+                    this.m.out(4, this.total_count) = Xk(this.ModelParams.stateindex_vx);
+                end
 
             end
             
@@ -238,6 +264,20 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 % 
 %             Observation = [x_phys;y_phys;x_virt;y_virt;eC;eL];
 %             this.State = this.x;
+            eC_pred_log = zeros(1, this.MPC_vars.N);
+            v_pred_log = zeros(1, this.MPC_vars.N);
+            for j = 1: this.MPC_vars.N
+                Xj = this.x(:, j);
+                x_phys_pred = Xj(1);
+                y_phys_pred = Xj(2);
+                theta_virt_pred=mod(Xj(end),this.traj.ppx.breaks(end));
+                [eC_pred, eL_pred] = this.getErrors(this.traj, theta_virt_pred,x_phys_pred,y_phys_pred);
+                eC_pred_log(1, j) = eL_pred;
+                v_pred_log(1, j) = Xj(this.ModelParams.stateindex_vx);
+            end
+            eC_pred_log = abs(eC_pred_log);
+            v_pred_log = abs(v_pred_log);
+
             this.obs_log = abs(this.obs_log); 
             if last_theta < first_theta
                 driving_length = (last_theta + this.tl - first_theta) / this.tl;
@@ -246,7 +286,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             end
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            Observation = [mean(this.obs_log(1,:)); max(this.obs_log(1,:)); mean(this.obs_log(2,:)); max(this.obs_log(2,:)); curvature_x; curvature_y];
+            Observation = [mean(this.obs_log(1,:)); max(this.obs_log(1,:)); mean(this.obs_log(2,:)); max(this.obs_log(2,:)); mean(eC_pred_log); max(eC_pred_log); mean(v_pred_log); max(v_pred_log); curvature_x; curvature_y];
 %             Observation = [mean(this.obs_log); max(this.obs_log); driving_length];
             this.State = this.x;
 
@@ -349,14 +389,26 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             x_phys = Xk(1);
             y_phys = Xk(2);
             theta_virt=mod(Xk(end),this.traj.ppx.breaks(end));
-            x_virt=ppval(this.traj.ppx,theta_virt);
-            y_virt=ppval(this.traj.ppy,theta_virt);
             [eC, eL] = this.getErrors(this.traj, theta_virt,x_phys,y_phys);
+            eC_pred_log = zeros(1, this.MPC_vars.N);
+            v_pred_log = zeros(1, this.MPC_vars.N);
+            for j = 1: this.MPC_vars.N
+                Xj = this.x(:, j);
+                x_phys_pred = Xj(1);
+                y_phys_pred = Xj(2);
+                theta_virt_pred=mod(Xj(end),this.traj.ppx.breaks(end));
+                [eC_pred, eL_pred] = this.getErrors(this.traj, theta_virt_pred,x_phys_pred,y_phys_pred);
+                eC_pred_log(1, j) = eL_pred;
+                v_pred_log(1, j) = Xj(this.ModelParams.stateindex_vx);
+            end
+            eC_pred_log = abs(eC_pred_log);
+            v_pred_log = abs(v_pred_log);
+
 
 %             InitialObservation = [x_phys;y_phys;x_virt;y_virt;eC;eL];
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            InitialObservation = [eC; eC; 0; 0; curvature_x; curvature_y];
+            InitialObservation = [eC; eC; 0; 0; mean(eC_pred_log); max(eC_pred_log); mean(v_pred_log); max(v_pred_log); curvature_x; curvature_y];
 %             InitialObservation = [eC; eC; 0];
             this.State = this.x;
             
