@@ -46,6 +46,10 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         cycle_flag = 0
         % used to further cauculate the mean and max value along one step
         obs_log = zeros(2, 20)
+        curvature_log = zeros(2, 20)
+        curvature_pred_log = zeros(2, 40)
+        curvature_k_log = zeros(1, 20)
+        curvature_k_pred_log = zeros(1, 40)
 
         last_closestIdx
         
@@ -91,7 +95,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             ObservationInfo.Description = 'eC_error_mean, eC_error_max, v_mean, v_max, curvature_x, curvature_y';
 %             ObservationInfo.Description = 'eC_error_mean, eC_error_max, driving_length';
             ObservationInfo.Description = ['eC_error_mean, eC_error_max, v_mean, v_max, pred_eC_mean,' ...
-                'pred_eC_max, pred_v_mean, pred_v_max, curvature_x, curvature_y'];
+                'pred_eC_max, pred_v_mean, pred_v_max, curvature_mean, curvature_mean_pred'];
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
@@ -236,6 +240,16 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
                 end
                 this.obs_log(1, i) = eC;
                 this.obs_log(2, i) = Xk(this.ModelParams.stateindex_vx);
+%                 this.curvature_log(1, i) = ppval(this.traj.ddppx,theta_virt);
+%                 this.curvature_log(2, i) = ppval(this.traj.ddppy,theta_virt);
+                dphi = ppval(this.traj.dppx,theta_virt);
+                ddphi = ppval(this.traj.ddppx,theta_virt);
+                domega = ppval(this.traj.dppy,theta_virt);
+                ddomega = ppval(this.traj.ddppy,theta_virt);
+                numerator = abs(dphi * ddomega - domega * ddphi);
+                denominator = sqrt((dphi ^ 2 + domega ^2) ^ 3);
+                this.curvature_k_log(1, i) = numerator / denominator;
+
                 if this.isTrain == 0
                     length = Xk(end);
                     if this.total_count > 1 && length < this.length_log(1, this.total_count-1)
@@ -274,11 +288,22 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
                 [eC_pred, eL_pred] = this.getErrors(this.traj, theta_virt_pred,x_phys_pred,y_phys_pred);
                 eC_pred_log(1, j) = eL_pred;
                 v_pred_log(1, j) = Xj(this.ModelParams.stateindex_vx);
+%                 this.curvature_pred_log(1, j) = ppval(this.traj.ddppx,theta_virt_pred);
+%                 this.curvature_pred_log(2, j) = ppval(this.traj.ddppy,theta_virt_pred);
+                dphi = ppval(this.traj.dppx,theta_virt_pred);
+                ddphi = ppval(this.traj.ddppx,theta_virt_pred);
+                domega = ppval(this.traj.dppy,theta_virt_pred);
+                ddomega = ppval(this.traj.ddppy,theta_virt_pred);
+                numerator = abs(dphi * ddomega - domega * ddphi);
+                denominator = sqrt((dphi ^ 2 + domega ^2) ^ 3);
+                this.curvature_k_pred_log(1, j) = numerator / denominator;
             end
             eC_pred_log = abs(eC_pred_log);
             v_pred_log = abs(v_pred_log);
+            this.curvature_pred_log = abs(this.curvature_pred_log);
 
-            this.obs_log = abs(this.obs_log); 
+            this.obs_log = abs(this.obs_log);
+            this.curvature_log = abs(this.curvature_log);
             if last_theta < first_theta
                 driving_length = (last_theta + this.tl - first_theta) / this.tl;
             else
@@ -286,7 +311,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             end
             curvature_x = ppval(this.traj.ddppx,theta_virt);
             curvature_y = ppval(this.traj.ddppy,theta_virt);
-            Observation = [mean(this.obs_log(1,:)); max(this.obs_log(1,:)); mean(this.obs_log(2,:)); max(this.obs_log(2,:)); mean(eC_pred_log); max(eC_pred_log); mean(v_pred_log); max(v_pred_log); curvature_x; curvature_y];
+            Observation = [mean(this.obs_log(1,:)); max(this.obs_log(1,:)); mean(this.obs_log(2,:)); max(this.obs_log(2,:)); mean(eC_pred_log); max(eC_pred_log); mean(v_pred_log); max(v_pred_log); mean(this.curvature_k_log(1,:)); mean(this.curvature_k_pred_log(1,:))];
 %             Observation = [mean(this.obs_log); max(this.obs_log); driving_length];
             this.State = this.x;
 
@@ -400,15 +425,33 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
                 [eC_pred, eL_pred] = this.getErrors(this.traj, theta_virt_pred,x_phys_pred,y_phys_pred);
                 eC_pred_log(1, j) = eL_pred;
                 v_pred_log(1, j) = Xj(this.ModelParams.stateindex_vx);
+%                 this.curvature_pred_log(1, j) = ppval(this.traj.ddppx,theta_virt_pred);
+%                 this.curvature_pred_log(2, j) = ppval(this.traj.ddppy,theta_virt_pred);
+                dphi = ppval(this.traj.dppx,theta_virt_pred);
+                ddphi = ppval(this.traj.ddppx,theta_virt_pred);
+                domega = ppval(this.traj.dppy,theta_virt_pred);
+                ddomega = ppval(this.traj.ddppy,theta_virt_pred);
+                numerator = abs(dphi * ddomega - domega * ddphi);
+                denominator = sqrt((dphi ^ 2 + domega ^2) ^ 3);
+                this.curvature_k_pred_log(1, j) = numerator / denominator;
             end
             eC_pred_log = abs(eC_pred_log);
             v_pred_log = abs(v_pred_log);
+            this.curvature_pred_log = abs(this.curvature_pred_log);
 
 
 %             InitialObservation = [x_phys;y_phys;x_virt;y_virt;eC;eL];
-            curvature_x = ppval(this.traj.ddppx,theta_virt);
-            curvature_y = ppval(this.traj.ddppy,theta_virt);
-            InitialObservation = [eC; eC; 0; 0; mean(eC_pred_log); max(eC_pred_log); mean(v_pred_log); max(v_pred_log); curvature_x; curvature_y];
+%             curvature_x = ppval(this.traj.ddppx,theta_virt);
+%             curvature_y = ppval(this.traj.ddppy,theta_virt);
+            dphi = ppval(this.traj.dppx,theta_virt);
+            ddphi = ppval(this.traj.ddppx,theta_virt);
+            domega = ppval(this.traj.dppy,theta_virt);
+            ddomega = ppval(this.traj.ddppy,theta_virt);
+            numerator = abs(dphi * ddomega - domega * ddphi);
+            denominator = sqrt((dphi ^ 2 + domega ^2) ^ 3);
+            curvature_k = numerator / denominator;
+
+            InitialObservation = [eC; eC; 0; 0; mean(eC_pred_log); max(eC_pred_log); mean(v_pred_log); max(v_pred_log); curvature_k; mean(this.curvature_k_pred_log(1,:))];
 %             InitialObservation = [eC; eC; 0];
             this.State = this.x;
             
