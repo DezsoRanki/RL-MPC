@@ -17,5 +17,9 @@ function [  ] = PlotAction( Action, MPC_vars, simN )
     plot([0:simN]*Ts,Action_remap(3,:))
     xlabel('time [s]')
     ylabel('qOmega [-]')
+    subplot(n,1,4)
+    plot([0:simN]*Ts,Action_remap(4,:))
+    xlabel('time [s]')
+    ylabel('rVtheta [-]')
 
 end

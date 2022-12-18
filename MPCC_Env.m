@@ -101,13 +101,14 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
-            ActionInfo = rlNumericSpec([3 1]);
+            ActionInfo = rlNumericSpec([4 1]);
 %             ActionInfo.Name = 'Cost Weights';
 %             ActionInfo.Name = 'qC, qL, qOmega, rD, rDelta rVtheta';
-            ActionInfo.Name = 'qC, qL, qOmega';
+%             ActionInfo.Name = 'qC, qL, qOmega';
+            ActionInfo.Name = 'qC, qL, qOmega, rVtheta';
 %             ActionInfo.Description = 'qC';
-            ActionInfo.LowerLimit = [1e-5; 100; 1e-6];
-            ActionInfo.UpperLimit = [100; 10000; 1e-4];
+            ActionInfo.LowerLimit = [1e-5; 100; 1e-6; 0.0002];
+            ActionInfo.UpperLimit = [100; 10000; 1e-4; 20];
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
@@ -167,7 +168,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             this.MPC_vars.qOmega = Action(3);
 %             this.MPC_vars.rD = Action(4);
 %             this.MPC_vars.rDelta = Action(5);
-%             this.MPC_vars.rVtheta = Action(6);
+            this.MPC_vars.rVtheta = Action(4);
             PlotAction(Action, this.MPC_vars, this.simN)
             % Simulation
             for i = 1: this.simN
@@ -521,7 +522,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             mean_v = mean(obs_log(2,:));
             mean_curvature_k_pred = mean(curvature_k_pred_log);
             if mean_curvature_k_pred > 2
-                Reward =  2 * exp(-(mean_eC * mean_eC) / 0.001);
+                Reward =  2 * exp(-(mean_eC * mean_eC) / 0.001) + mean_v;
             else
                 Reward = mean_v;
             end

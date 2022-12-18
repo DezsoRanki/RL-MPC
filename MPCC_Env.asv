@@ -3,7 +3,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
     
     %% Properties (set properties' attributes accordingly)
     properties
-        isTrain = 0
+        isTrain = 1
         % Specify and initialize environment's necessary properties    
         CarModel = 'ORCA'
 
@@ -101,13 +101,14 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             
             % Initialize Action settings   
 %             ActionInfo = rlNumericSpec([1 1]);
-            ActionInfo = rlNumericSpec([3 1]);
+            ActionInfo = rlNumericSpec([4 1]);
 %             ActionInfo.Name = 'Cost Weights';
 %             ActionInfo.Name = 'qC, qL, qOmega, rD, rDelta rVtheta';
-            ActionInfo.Name = 'qC, qL, qOmega';
+%             ActionInfo.Name = 'qC, qL, qOmega';
+            ActionInfo.Name = 'qC, qL, qOmega, rVtheta';
 %             ActionInfo.Description = 'qC';
-            ActionInfo.LowerLimit = [1e-5; 100; 1e-6];
-            ActionInfo.UpperLimit = [100; 10000; 1e-4];
+            ActionInfo.LowerLimit = [1e-5; 100; 1e-6; 0.002];
+            ActionInfo.UpperLimit = [100; 10000; 1e-4;];
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
@@ -327,7 +328,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             
             % Get reward
 %             Reward = getReward(this, this.obs_log, driving_length);
-            Reward = getReward(this, this.obs_log, this.curvature_pred_log);
+            Reward = getReward(this, this.obs_log, this.curvature_k_pred_log);
             
             % (optional) use notifyEnvUpdated to signal that the 
             % environment has been updated (e.g. to update visualization)
@@ -500,7 +501,7 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         end
         
         % Reward function
-        function Reward = getReward(this, obs_log)
+        function Reward = getReward(this, obs_log, curvature_k_pred_log)
 %             Xk = this.x(:,1); % observation from 1
 %             x_phys = Xk(1);
 %             y_phys = Xk(2);
@@ -514,12 +515,18 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
             mean_eC = mean(obs_log(1,:));
 %             shifted_length = driving_length * 25 - 1; % [0,1] to [-1, 0]
 %             error_reward = exp(-(mean_eC * mean_eC) / 0.001);
-%             length_reward = exp(shifted_length);
+%             length_reward = exp(shifted_length);s
 %             Reward = length_reward;
 %             Reward = 0.5 * error_reward + 0.5 * length_reward;
 %             Reward = 10* Reward;
             mean_v = mean(obs_log(2,:));
-            Reward = mean_v - mean_eC;
+            mean_curvature_k_pred = mean(curvature_k_pred_log);
+            if mean_curvature_k_pred > 2
+                Reward =  2 * exp(-(mean_eC * mean_eC) / 0.001) + mean_v;
+            else
+                Reward = mean_v;
+            end
+%             Reward = mean_v - mean_eC;
         
         end
         
