@@ -25,11 +25,11 @@ if isTrain
         "MaxStepsPerEpisode",25, ...
         "SaveAgentCriteria","EpisodeReward", ...
         "SaveAgentValue",50, ...
-        "SaveAgentDirectory",pwd + "/runs_3_params_qC_qL_qOmega_reward_curvature_obs_pre/Agents");
+        "SaveAgentDirectory",pwd + "/runs_4_params_qC_qL_qOmega_qV_reward_curvature_obs_pre/Agents");
     
     trainResults = train(agent, env, opt);
 else
-    load(pwd + "/runs_3_params_qC_qL_qOmega_reward_curvature_obs_pre/Agents/Agent500.mat", "saved_agent");
+    load(pwd + "/runs_4_params_qC_qL_qOmega_qV_reward_curvature_obs_pre/Agents/Agent500.mat", "saved_agent");
     agent = saved_agent;
     Observation = env.reset();
     simOpts = rlSimulationOptions(...
