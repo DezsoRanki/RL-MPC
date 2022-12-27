@@ -107,8 +107,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
 %             ActionInfo.Name = 'qC, qL, qOmega';
             ActionInfo.Name = 'qC, qL, qOmega, rVtheta';
 %             ActionInfo.Description = 'qC';
-            ActionInfo.LowerLimit = [1e-5; 100; 1e-6; 0.0002];
-            ActionInfo.UpperLimit = [100; 10000; 1e-4; 20];
+            ActionInfo.LowerLimit = [1e-5; 100; 1e-6; 0.002];
+            ActionInfo.UpperLimit = [100; 10000; 1e-4; 2];
             
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
@@ -338,7 +338,8 @@ classdef MPCC_Env < rl.env.MATLABEnvironment
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             %% Define starting position
-            startIdx = 1; %point (in terms of track centerline array) allong the track 
+%             startIdx = 1; %point (in terms of track centerline array) allong the track 
+            startIdx = 41;
             % where the car starts, on the center line, aligned with the track, driving
             % straight with vx0
             %since the used bicycle model is not well defined for slow velocities use vx0 > 0.5
